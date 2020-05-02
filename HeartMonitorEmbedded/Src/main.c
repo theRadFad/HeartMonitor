@@ -59,6 +59,8 @@ static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN 0 */
 
 uint8_t buf[1];
+int sampling_rate = 0;
+int reading_sampling_rate = 0;
 
 /* USER CODE END 0 */
 
@@ -206,7 +208,26 @@ static void MX_GPIO_Init(void)
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	HAL_UART_Transmit(&huart1, buf, 1, 100); 
 	if (buf[0] == 'a'){
-		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_12); 
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET); 
+	}
+	else if (buf[0] == 'b'){
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET); 
+	}
+	else if (buf[0] == 'c'){
+		if (reading_sampling_rate){
+			reading_sampling_rate = 0; 
+			uint8_t done[] = "done\r\n";
+			HAL_UART_Transmit(&huart1, done, sizeof done, 100);
+		}
+		else {
+			reading_sampling_rate = 1; 
+			sampling_rate = 0;
+		}
+	}
+	else if (reading_sampling_rate){
+		if (buf[0] >= '0' && buf[0] <= '9'){
+			sampling_rate = sampling_rate * 10 + buf[0] - '0'; 
+		}
 	}
 	HAL_UART_Receive_IT(&huart1, buf, 1); 
 }
