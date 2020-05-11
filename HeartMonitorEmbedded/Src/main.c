@@ -353,8 +353,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	else if (buf[0] == 'c'){
 		if (reading_sampling_rate){
 			reading_sampling_rate = 0; 
-			uint8_t done[] = "done\r\n";
-			HAL_UART_Transmit(&huart1, done, sizeof done, 100);
+			__HAL_TIM_SET_PRESCALER(&htim1, (16000 / sampling_rate) - 1); 
 		}
 		else {
 			reading_sampling_rate = 1; 
