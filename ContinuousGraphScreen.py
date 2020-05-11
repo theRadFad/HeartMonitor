@@ -22,6 +22,9 @@ class ContinuousGraphScreen:
         self.screen.geometry('700x500')
         self.screen.resizable(width = False, height = False)
         self.screen.title('Continuous Data')
+        self.back_button = Button(self.screen, text='Go back',
+            command = self.screen.destroy)
+        self.back_button['state'] = DISABLED
 
         #Adding the continuous plot
         fig = Figure()
@@ -40,6 +43,9 @@ class ContinuousGraphScreen:
         self.ani = animation.FuncAnimation(fig, self.animate,
         interval= 1000 / self.sampling_rate, blit=False)
 
+        #Adding the buttons
+        self.back_button.pack()
+
         # Displaying the window
         self.screen.mainloop()
 
@@ -54,3 +60,4 @@ class ContinuousGraphScreen:
 
     def stop(self):
         self.ani.event_source.stop()
+        self.back_button['state'] = NORMAL
