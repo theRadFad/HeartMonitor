@@ -1,8 +1,10 @@
 from tkinter import *
+from ContinuousGraphScreen import ContinuousGraphScreen
 
 class CommandScreen:
     def __init__(self, ser):
         self.ser = ser
+        self.sampling_rate = 20
 
         #Designing the UI
         self.screen = Tk()
@@ -12,6 +14,7 @@ class CommandScreen:
 
         self.sampling_rate_entry = Entry(self.screen)
         self.sampling_rate_entry.grid(row = 1, column = 2)
+        self.sampling_rate_entry.insert(END, 10)
 
         rate_button = Button(self.screen, text='Set Sampling Rate',
             command = self.set_sampling_rate)
@@ -32,7 +35,12 @@ class CommandScreen:
         self.ser.write(b'a')
 
     def get_minute_data(self):
-        self.ser.write(b'b')
+        ContinuousGraphScreen(self.ser, self.sampling_rate)
 
     def set_sampling_rate(self):
-        self.ser.write(('c' + self.sampling_rate_entry.get() + 'c').encode('utf-8'))
+        try:
+            self.sampling_rate = int(self.sampling_rate_entry.get())
+            self.ser.write(('c' + self.sampling_rate_entry.get() + 'c').encode('utf-8'))
+        except:
+            print("Error in setting sampling rate")
+            return
