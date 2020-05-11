@@ -4,12 +4,18 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import datetime as dt
 import matplotlib.animation as animation
+from threading import Timer
 
 
 class ContinuousGraphScreen:
     def __init__(self, ser, sampling_rate):
         self.ser = ser
         self.sampling_rate = sampling_rate
+
+        self.ser.reset_input_buffer()
+        self.ser.reset_output_buffer()
+        self.ser.write(b'b')
+        Timer(60, self.stop).start()
 
         #Designing the UI
         self.screen = Tk()
@@ -20,7 +26,6 @@ class ContinuousGraphScreen:
         #Adding the continuous plot
         fig = Figure()
 
-        #Todo: should make this a function of sampling rate
         self.x = np.arange(0, 60 * self.sampling_rate)
         self.y = np.zeros(60 * self.sampling_rate)
 
@@ -32,8 +37,8 @@ class ContinuousGraphScreen:
         ax = fig.add_subplot(111)
         self.line, = ax.plot(self.x, self.y)
         ax.set_ylim(0, 4100)
-        ani = animation.FuncAnimation(fig, self.animate,
-        interval= 1000 // self.sampling_rate, blit=False)
+        self.ani = animation.FuncAnimation(fig, self.animate,
+        interval= 1000 / self.sampling_rate, blit=False)
 
         # Displaying the window
         self.screen.mainloop()
@@ -45,4 +50,7 @@ class ContinuousGraphScreen:
         return self.line,
 
     def get_datapoint(self):
-        return 10
+        return int(self.ser.read(6).decode('utf-8'))
+
+    def stop(self):
+        self.ani.event_source.stop()

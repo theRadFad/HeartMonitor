@@ -5,7 +5,7 @@ class CommandScreen:
     def __init__(self, ser):
         self.ser = ser
         self.sampling_rate = 20
-
+        self.ser.write(b'c20c')
         #Designing the UI
         self.screen = Tk()
         self.screen.geometry('400x250')
@@ -14,7 +14,7 @@ class CommandScreen:
 
         self.sampling_rate_entry = Entry(self.screen)
         self.sampling_rate_entry.grid(row = 1, column = 2)
-        self.sampling_rate_entry.insert(END, 10)
+        self.sampling_rate_entry.insert(END, 20)
 
         rate_button = Button(self.screen, text='Set Sampling Rate',
             command = self.set_sampling_rate)
