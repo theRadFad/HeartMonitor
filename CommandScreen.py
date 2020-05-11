@@ -40,7 +40,7 @@ class CommandScreen:
     def set_sampling_rate(self):
         try:
             selected_rate = int(self.sampling_rate_entry.get())
-            if selected_rate > 1:
+            if selected_rate > 0:
                 self.sampling_rate = selected_rate
                 self.ser.write(('c' + self.sampling_rate_entry.get() + 'c').encode('utf-8'))
             else:
