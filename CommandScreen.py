@@ -1,5 +1,6 @@
 from tkinter import *
 from ContinuousGraphScreen import ContinuousGraphScreen
+from BpmReading import BpmReading
 
 class CommandScreen:
     def __init__(self, ser):
@@ -32,7 +33,7 @@ class CommandScreen:
         self.screen.mainloop()
 
     def get_bpm(self):
-        self.ser.write(b'a')
+        BpmReading(self.ser)
 
     def get_minute_data(self):
         ContinuousGraphScreen(self.ser, self.sampling_rate)
