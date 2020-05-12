@@ -19,7 +19,7 @@ class ContinuousGraphScreen:
 
         #Designing the UI
         self.screen = Tk()
-        self.screen.geometry('700x500')
+        self.screen.geometry('700x600')
         self.screen.resizable(width = False, height = False)
         self.screen.title('Continuous Data')
         self.back_button = Button(self.screen, text='Go back',
