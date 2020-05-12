@@ -29,8 +29,8 @@ class ContinuousGraphScreen:
         #Adding the continuous plot
         fig = Figure()
 
-        self.x = np.arange(0, 60 * self.sampling_rate)
-        self.y = np.zeros(60 * self.sampling_rate)
+        self.x = np.arange(0, 10 * self.sampling_rate)
+        self.y = np.zeros(10 * self.sampling_rate)
 
         label = Label(self.screen,text="ECG Live Monitor").pack()
 
