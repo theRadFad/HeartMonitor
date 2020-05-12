@@ -45,6 +45,7 @@ ADC_HandleTypeDef hadc1;
 
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim3;
 
 UART_HandleTypeDef huart1;
 
@@ -59,6 +60,7 @@ static void MX_USART1_UART_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
+static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -69,7 +71,10 @@ static void MX_TIM2_Init(void);
 uint8_t buf[1];
 int sampling_rate = 20;
 int reading_sampling_rate = 0;
-
+int calculating_bpm = 0; 
+int bpm_values[300] = {0};
+int bpm_index = 0;
+int high[300] = {0};
 /* USER CODE END 0 */
 
 /**
@@ -104,12 +109,14 @@ int main(void)
   MX_ADC1_Init();
   MX_TIM1_Init();
   MX_TIM2_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET); 
 	HAL_UART_Receive_IT(&huart1, buf, 1);
 
 	__HAL_TIM_CLEAR_IT(&htim1, TIM_IT_UPDATE);
 	__HAL_TIM_CLEAR_IT(&htim2, TIM_IT_UPDATE);
+//	__HAL_TIM_CLEAR_IT(&htim3, TIM_IT_UPDATE);
 
 	
   /* USER CODE END 2 */
@@ -322,7 +329,7 @@ static void MX_TIM2_Init(void)
   {
     Error_Handler();
   }
-  if (HAL_TIM_OC_Init(&htim2) != HAL_OK)
+  if (HAL_TIM_PWM_Init(&htim2) != HAL_OK)
   {
     Error_Handler();
   }
@@ -332,17 +339,75 @@ static void MX_TIM2_Init(void)
   {
     Error_Handler();
   }
-  sConfigOC.OCMode = TIM_OCMODE_TIMING;
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
   sConfigOC.Pulse = 0;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
-  if (HAL_TIM_OC_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
   {
     Error_Handler();
   }
   /* USER CODE BEGIN TIM2_Init 2 */
 
   /* USER CODE END TIM2_Init 2 */
+
+}
+
+/**
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM3_Init(void)
+{
+
+  /* USER CODE BEGIN TIM3_Init 0 */
+
+  /* USER CODE END TIM3_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM3_Init 1 */
+
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 800-1;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 100-1;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_OC_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_TIMING;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_OC_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
+
+  /* USER CODE END TIM3_Init 2 */
 
 }
 
@@ -409,7 +474,9 @@ static void MX_GPIO_Init(void)
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	//HAL_UART_Transmit(&huart1, buf, 1, 100); 
 	if (buf[0] == 'a'){
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET); 
+		calculating_bpm = 1; 
+		bpm_index = 0;
+		HAL_TIM_Base_Start_IT(&htim3);
 	}
 	else if (buf[0] == 'b'){
 		HAL_TIM_Base_Start_IT(&htim1); 
@@ -436,24 +503,105 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 uint16_t conv; 
 uint8_t out[] = {0,0,0,0, '\r', '\n'}; 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
+
 	conv = HAL_ADC_GetValue(hadc); 
-	out[3] = '0' + (conv%10);
-	conv /= 10;
-	out[2] = '0' + (conv%10);
-	conv /= 10;
-	out[1] = '0' + (conv%10);
-	conv /= 10;
-	out[0] = '0' + (conv%10);
-	HAL_UART_Transmit(&huart1, out, sizeof out, 100); 
+	
+	if (calculating_bpm){
+		bpm_values[bpm_index++] = conv; 
+		if (bpm_index == 300){
+			calculating_bpm = 0; 
+			HAL_TIM_Base_Stop_IT(&htim3);
+			
+//			int countHigh = 0; 
+//			for (int i = 4096; i >= 0 ; i--){
+//				countHigh = 0; 
+//				for (int j = 0; j < 300 ; j++){
+//					if (bpm_values[j] >= i){
+//						high[countHigh++] = j;
+//					}
+//				}
+//				if (countHigh >= 4) {
+//					int bpm = 6000 / (high[2] - high[0]); 
+//					
+//					out[3] = '0' + (bpm%10);
+//					bpm /= 10;
+//					out[2] = '0' + (bpm%10);
+//					bpm /= 10;
+//					out[1] = '0' + (bpm%10);
+//					bpm /= 10;
+//					out[0] = '0' + (bpm%10);
+//					HAL_UART_Transmit(&huart1, out, sizeof out, 100); 
+//					break;
+//				}
+//			}
+			int peak1 = 0, peak2 = 299, peak3 = 299; 
+			for (int i = 5 ; i < 255 ; i++) {
+				if (bpm_values[i] > bpm_values[i-1] && 
+						bpm_values[i] > bpm_values[i-2] && 
+						bpm_values[i] > bpm_values[i-3] && 
+						bpm_values[i] > bpm_values[i-4] && 
+						bpm_values[i] > bpm_values[i-5] && 
+						bpm_values[i] > bpm_values[i+1] && 
+						bpm_values[i] > bpm_values[i+2] && 
+						bpm_values[i] > bpm_values[i+3] && 
+						bpm_values[i] > bpm_values[i+4] && 
+						bpm_values[i] > bpm_values[i+5]){
+						
+						peak1 = i; 
+						break; 
+				}							
+			}
+			for (int i = peak1 + 6 ; i < 255 ; i++) {
+				if (bpm_values[i] > bpm_values[i-1] && 
+						bpm_values[i] > bpm_values[i-2] && 
+						bpm_values[i] > bpm_values[i-3] && 
+						bpm_values[i] > bpm_values[i-4] && 
+						bpm_values[i] > bpm_values[i-5] && 
+						bpm_values[i] > bpm_values[i+1] && 
+						bpm_values[i] > bpm_values[i+2] && 
+						bpm_values[i] > bpm_values[i+3] && 
+						bpm_values[i] > bpm_values[i+4] && 
+						bpm_values[i] > bpm_values[i+5]){
+						
+						peak2 = i; 
+						if (peak2 - peak1 < 30) continue;
+						int bpm = 6000 / (peak2 - peak1); 
+						out[3] = '0' + (bpm%10);
+						bpm /= 10;
+						out[2] = '0' + (bpm%10);
+						bpm /= 10;
+						out[1] = '0' + (bpm%10);
+						bpm /= 10;
+						out[0] = '0' + (bpm%10);
+						HAL_UART_Transmit(&huart1, out, sizeof out, 100); 
+						break;
+				}							
+			}
+		}
+	}
+	else {
+		out[3] = '0' + (conv%10);
+		conv /= 10;
+		out[2] = '0' + (conv%10);
+		conv /= 10;
+		out[1] = '0' + (conv%10);
+		conv /= 10;
+		out[0] = '0' + (conv%10);
+		HAL_UART_Transmit(&huart1, out, sizeof out, 100); 
+	}
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
+	//if (htim == &htim1 || htim == &htim3) {
 	if (htim == &htim1) {
 		HAL_ADC_Start_IT(&hadc1); 
 	}
-	else {
+	else if (htim == &htim2) {
 		HAL_TIM_Base_Stop_IT(&htim1); 
 		HAL_TIM_Base_Stop_IT(&htim2);
+	}
+	else {
+		HAL_ADC_Start_IT(&hadc1); 
 	}
 }
 
