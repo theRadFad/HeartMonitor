@@ -11,6 +11,7 @@ class ContinuousGraphScreen:
     def __init__(self, ser, sampling_rate):
         self.ser = ser
         self.sampling_rate = sampling_rate
+        self.data_chunk = sampling_rate // 5
 
         self.ser.reset_input_buffer()
         self.ser.reset_output_buffer()
@@ -41,7 +42,7 @@ class ContinuousGraphScreen:
         self.line, = ax.plot(self.x, self.y)
         ax.set_ylim(0, 4100)
         self.ani = animation.FuncAnimation(fig, self.animate,
-        interval= 1000 / self.sampling_rate, blit=False)
+        interval= 200, blit=False)
 
         #Adding the buttons
         self.back_button.pack()
@@ -50,14 +51,14 @@ class ContinuousGraphScreen:
         self.screen.mainloop()
 
     def animate(self, i):
-        self.y = np.roll(self.y, -1)
-        self.y[-1] = self.get_datapoint()
+        self.y = np.roll(self.y, - self.data_chunk)
+        self.y[-self.data_chunk:] = self.get_datapoint()
         self.line.set_ydata(self.y)  # update the data
         return self.line,
 
     def get_datapoint(self):
-        return int(self.ser.read(6).decode('utf-8'))
-
+        return self.ser.read(6 * self.data_chunk).decode('utf-8').split('\r\n')[:-1]
+        
     def stop(self):
         self.ani.event_source.stop()
         self.back_button['state'] = NORMAL
