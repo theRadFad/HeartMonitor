@@ -33,6 +33,7 @@ class ConnectionScreen:
 
         self.baud_rate_entry = Entry(self.screen, width = 30)
         self.baud_rate_entry.grid(row = 3, column = 2)
+        self.baud_rate_entry.insert(END, 115200)
 
         submit_button = Button(self.screen, text='Connect',
             command = self.connect)
