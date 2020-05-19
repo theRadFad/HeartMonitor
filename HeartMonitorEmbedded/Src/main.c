@@ -527,17 +527,18 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
 			
 			int peak1 = getPeak(bpm_values, 30, 100, 30); 
 			int peak2 = getPeak(bpm_values, peak1 + 1, 169, 30); 
-			
-			int bpm = 6000 / (peak2 - peak1); 
-			out[3] = '0' + (bpm%10);
-			bpm /= 10;
-			out[2] = '0' + (bpm%10);
-			bpm /= 10;
-			out[1] = '0' + (bpm%10);
-			bpm /= 10;
-			out[0] = '0' + (bpm%10);
-			HAL_UART_Transmit(&huart1, out, sizeof out, 100);		
-
+		
+			if (peak1 != -1 && peak2 != -1) {
+				int bpm = 6000 / (peak2 - peak1); 
+				out[3] = '0' + (bpm%10);
+				bpm /= 10;
+				out[2] = '0' + (bpm%10);
+				bpm /= 10;
+				out[1] = '0' + (bpm%10);
+				bpm /= 10;
+				out[0] = '0' + (bpm%10);
+				HAL_UART_Transmit(&huart1, out, sizeof out, 100);		
+			}
 		}
 	}
 	else {

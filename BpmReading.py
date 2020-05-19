@@ -20,8 +20,11 @@ class BpmReading:
             command = self.screen.destroy)
         self.back_button['state'] = DISABLED
         self.back_button.pack()
-        bpm = str(int(self.ser.read(6).decode('utf-8')))
-        v.set("Your heart rate is " + bpm + " beats per minute")
+        bpm = self.ser.read(6).decode('utf-8')
+        if bpm == '':
+            v.set("There is an error calculating heart rate. Please try again")
+        else:
+            v.set("Your heart rate is " + str(int(bpm)) + " beats per minute")
         self.back_button['state'] = NORMAL
         self.ser.timeout = 0.5
         self.screen.mainloop()
