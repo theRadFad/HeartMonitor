@@ -115,7 +115,7 @@ int main(void)
 
 	__HAL_TIM_CLEAR_IT(&htim1, TIM_IT_UPDATE);
 	__HAL_TIM_CLEAR_IT(&htim2, TIM_IT_UPDATE);
-//	__HAL_TIM_CLEAR_IT(&htim3, TIM_IT_UPDATE);
+	__HAL_TIM_CLEAR_IT(&htim3, TIM_IT_UPDATE);
 
 	
   /* USER CODE END 2 */
@@ -127,9 +127,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-//		HAL_ADC_Start_IT(&hadc1); 
-//		HAL_Delay(10); 
-		
+
   }
   /* USER CODE END 3 */
 }

@@ -52,12 +52,13 @@ class ContinuousGraphScreen:
         self.screen.mainloop()
 
     def animate(self, i):
-        self.y = np.roll(self.y, - self.data_chunk)
-        self.y[-self.data_chunk:] = self.get_datapoint()
-        self.line.set_ydata(self.y)  # update the data
-        self.counter += 1
-        if self.counter == 300:
+        data = self.get_datapoint()
+        if (len(data) < self.data_chunk):
             self.stop()
+            return self.line
+        self.y = np.roll(self.y, - self.data_chunk)
+        self.y[-self.data_chunk:] = data
+        self.line.set_ydata(self.y)  # update the data
         return self.line,
 
     def get_datapoint(self):

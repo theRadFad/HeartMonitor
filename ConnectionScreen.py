@@ -51,6 +51,6 @@ class ConnectionScreen:
 
         com_port = self.port_dict[self.port.get()]
 
-        self.ser = Serial(com_port, baud_rate)
+        self.ser = Serial(com_port, baud_rate, timeout = 0.5)
 
         self.screen.destroy()
