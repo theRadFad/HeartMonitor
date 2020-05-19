@@ -427,7 +427,7 @@ static void MX_USART1_UART_Init(void)
 
   /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = 9600;
+  huart1.Init.BaudRate = 115200;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
@@ -472,7 +472,6 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-	//HAL_UART_Transmit(&huart1, buf, 1, 100); 
 	if (buf[0] == 'a'){
 		calculating_bpm = 1; 
 		bpm_index = 0;
@@ -592,7 +591,6 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
-	//if (htim == &htim1 || htim == &htim3) {
 	if (htim == &htim1) {
 		HAL_ADC_Start_IT(&hadc1); 
 	}

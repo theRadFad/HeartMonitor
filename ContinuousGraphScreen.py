@@ -12,11 +12,12 @@ class ContinuousGraphScreen:
         self.ser = ser
         self.sampling_rate = sampling_rate
         self.data_chunk = sampling_rate // 5
+        self.counter = 0
 
         self.ser.reset_input_buffer()
         self.ser.reset_output_buffer()
         self.ser.write(b'b')
-        Timer(60, self.stop).start()
+        # Timer(60, self.stop).start()
 
         #Designing the UI
         self.screen = Tk()
@@ -54,11 +55,14 @@ class ContinuousGraphScreen:
         self.y = np.roll(self.y, - self.data_chunk)
         self.y[-self.data_chunk:] = self.get_datapoint()
         self.line.set_ydata(self.y)  # update the data
+        self.counter += 1
+        if self.counter == 300:
+            self.stop()
         return self.line,
 
     def get_datapoint(self):
         return self.ser.read(6 * self.data_chunk).decode('utf-8').split('\r\n')[:-1]
-        
+
     def stop(self):
         self.ani.event_source.stop()
         self.back_button['state'] = NORMAL
