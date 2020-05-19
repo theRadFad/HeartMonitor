@@ -1,6 +1,7 @@
 from serial import Serial
 from serial.tools import list_ports
 from tkinter import *
+from tkinter import messagebox
 
 class ConnectionScreen:
 
@@ -46,12 +47,18 @@ class ConnectionScreen:
     def connect(self):
         try:
             baud_rate = int(self.baud_rate_entry.get())
+            if baud_rate <= 0:
+                raise
         except:
-            print("Error! Invalid baud rate")
+            messagebox.showerror("Setting baud rate",
+            "Please select a positive baud rate")
             return None
 
         com_port = self.port_dict[self.port.get()]
 
-        self.ser = Serial(com_port, baud_rate, timeout = 0.5)
-
-        self.screen.destroy()
+        try:
+            self.ser = Serial(com_port, baud_rate, timeout = 0.5)
+            self.screen.destroy()
+        except:
+            messagebox.showerror("Access Denied",
+            "The COM port seems to be busy. It could be in use by another application")

@@ -45,8 +45,10 @@ class CommandScreen:
             if selected_rate > 0 and selected_rate <= 500 and selected_rate % 5 == 0:
                 self.sampling_rate = selected_rate
                 self.ser.write(('c' + self.sampling_rate_entry.get() + 'c').encode('utf-8'))
+                messagebox.showinfo("Setting sampling rate",
+                "Success!")
             else:
-                messagebox.showerror("Sampling rate error",
+                messagebox.showerror("Setting sampling rate",
                 "Please select a rate that is greater than 0, no greater than 500, and divisible by 5")
                 self.sampling_rate_entry.delete(0, END)
                 self.sampling_rate_entry.insert(END, self.sampling_rate)
