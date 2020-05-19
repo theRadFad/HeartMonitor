@@ -72,9 +72,8 @@ uint8_t buf[1];
 int sampling_rate = 20;
 int reading_sampling_rate = 0;
 int calculating_bpm = 0; 
-int bpm_values[300] = {0};
+int bpm_values[200] = {0};
 int bpm_index = 0;
-int high[300] = {0};
 /* USER CODE END 0 */
 
 /**
@@ -499,83 +498,48 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	HAL_UART_Receive_IT(&huart1, buf, 1); 
 }
 
+int getPeak(int vals[], int start, int end, int width) {
+	if (start - width < 0 || end + width > 200) return -1; 
+	for (int i = start ; i < end; i++) {
+		//Check if vals[i] is a peak
+		int valid = 1;
+		for (int j = 1; j <= 30 ; j++) {
+			if (vals[i + j] > vals[i] || vals[i - j] > vals[i]){
+				valid = 0;
+				break;
+			}
+		}
+		if (valid) return i; 
+	}
+	return -1;
+}
+
+
 uint16_t conv; 
-uint8_t out[] = {0,0,0,0, '\r', '\n'}; 
+uint8_t out[] = {0,0,0,0, '\r', '\n'};
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
 
 	conv = HAL_ADC_GetValue(hadc); 
 	
 	if (calculating_bpm){
 		bpm_values[bpm_index++] = conv; 
-		if (bpm_index == 300){
+		if (bpm_index == 200){
 			calculating_bpm = 0; 
 			HAL_TIM_Base_Stop_IT(&htim3);
 			
-//			int countHigh = 0; 
-//			for (int i = 4096; i >= 0 ; i--){
-//				countHigh = 0; 
-//				for (int j = 0; j < 300 ; j++){
-//					if (bpm_values[j] >= i){
-//						high[countHigh++] = j;
-//					}
-//				}
-//				if (countHigh >= 4) {
-//					int bpm = 6000 / (high[2] - high[0]); 
-//					
-//					out[3] = '0' + (bpm%10);
-//					bpm /= 10;
-//					out[2] = '0' + (bpm%10);
-//					bpm /= 10;
-//					out[1] = '0' + (bpm%10);
-//					bpm /= 10;
-//					out[0] = '0' + (bpm%10);
-//					HAL_UART_Transmit(&huart1, out, sizeof out, 100); 
-//					break;
-//				}
-//			}
-			int peak1 = 0, peak2 = 299, peak3 = 299; 
-			for (int i = 5 ; i < 255 ; i++) {
-				if (bpm_values[i] > bpm_values[i-1] && 
-						bpm_values[i] > bpm_values[i-2] && 
-						bpm_values[i] > bpm_values[i-3] && 
-						bpm_values[i] > bpm_values[i-4] && 
-						bpm_values[i] > bpm_values[i-5] && 
-						bpm_values[i] > bpm_values[i+1] && 
-						bpm_values[i] > bpm_values[i+2] && 
-						bpm_values[i] > bpm_values[i+3] && 
-						bpm_values[i] > bpm_values[i+4] && 
-						bpm_values[i] > bpm_values[i+5]){
-						
-						peak1 = i; 
-						break; 
-				}							
-			}
-			for (int i = peak1 + 6 ; i < 255 ; i++) {
-				if (bpm_values[i] > bpm_values[i-1] && 
-						bpm_values[i] > bpm_values[i-2] && 
-						bpm_values[i] > bpm_values[i-3] && 
-						bpm_values[i] > bpm_values[i-4] && 
-						bpm_values[i] > bpm_values[i-5] && 
-						bpm_values[i] > bpm_values[i+1] && 
-						bpm_values[i] > bpm_values[i+2] && 
-						bpm_values[i] > bpm_values[i+3] && 
-						bpm_values[i] > bpm_values[i+4] && 
-						bpm_values[i] > bpm_values[i+5]){
-						
-						peak2 = i; 
-						if (peak2 - peak1 < 30) continue;
-						int bpm = 6000 / (peak2 - peak1); 
-						out[3] = '0' + (bpm%10);
-						bpm /= 10;
-						out[2] = '0' + (bpm%10);
-						bpm /= 10;
-						out[1] = '0' + (bpm%10);
-						bpm /= 10;
-						out[0] = '0' + (bpm%10);
-						HAL_UART_Transmit(&huart1, out, sizeof out, 100); 
-						break;
-				}							
-			}
+			int peak1 = getPeak(bpm_values, 30, 100, 30); 
+			int peak2 = getPeak(bpm_values, peak1 + 1, 169, 30); 
+			
+			int bpm = 6000 / (peak2 - peak1); 
+			out[3] = '0' + (bpm%10);
+			bpm /= 10;
+			out[2] = '0' + (bpm%10);
+			bpm /= 10;
+			out[1] = '0' + (bpm%10);
+			bpm /= 10;
+			out[0] = '0' + (bpm%10);
+			HAL_UART_Transmit(&huart1, out, sizeof out, 100);		
+
 		}
 	}
 	else {
