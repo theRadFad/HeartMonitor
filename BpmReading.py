@@ -6,6 +6,7 @@ class BpmReading:
 
         self.ser.reset_input_buffer()
         self.ser.reset_output_buffer()
+        self.ser.timeout = 5;
         self.ser.write(b'a')
 
         #Designing the UI
@@ -22,4 +23,5 @@ class BpmReading:
         bpm = str(int(self.ser.read(6).decode('utf-8')))
         v.set("Your heart rate is " + bpm + " beats per minute")
         self.back_button['state'] = NORMAL
+        self.ser.timeout = 0.5
         self.screen.mainloop()
