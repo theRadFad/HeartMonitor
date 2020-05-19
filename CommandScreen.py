@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter import messagebox
 from ContinuousGraphScreen import ContinuousGraphScreen
 from BpmReading import BpmReading
 
@@ -41,11 +42,14 @@ class CommandScreen:
     def set_sampling_rate(self):
         try:
             selected_rate = int(self.sampling_rate_entry.get())
-            if selected_rate > 0:
+            if selected_rate > 0 and selected_rate <= 500 and selected_rate % 5 == 0:
                 self.sampling_rate = selected_rate
                 self.ser.write(('c' + self.sampling_rate_entry.get() + 'c').encode('utf-8'))
             else:
-                print("Cannot set non-positive sampling rate")
+                messagebox.showerror("Sampling rate error",
+                "Please select a rate that is greater than 0, no greater than 500, and divisible by 5")
+                self.sampling_rate_entry.delete(0, END)
+                self.sampling_rate_entry.insert(END, self.sampling_rate)
         except:
             print("Error in setting sampling rate")
             return
